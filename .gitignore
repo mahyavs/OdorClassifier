@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+outputs/
+*.joblib
+*.pkl
+*.sqlite3
+*.db
+.ipynb_checkpoints/
+.DS_Store
+data/compounds_before_curation.xlsx
