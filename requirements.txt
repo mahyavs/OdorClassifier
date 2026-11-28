@@ -1,24 +1,19 @@
-# Source-derived dependency list; original experimental versions not supplied.
-# This is not a verified lockfile. Install the original compatible mol2vec
-# distribution separately, as well as its exact pretrained model if enabled.
-numpy
-pandas
-scipy
-scikit-learn
-joblib
-rdkit
-openpyxl
-pyarrow
-matplotlib
-plotly
-umap-learn
-iterative-stratification
-optuna
-catboost
-lightgbm
-xgboost
-gensim
-mordred
-boruta
-shap
-pytest
+numpy==2.5.2
+pandas==3.0.5
+scipy==1.14.0
+scikit-learn==1.9.0
+joblib==1.5.3
+rdkit==2026.3.5
+openpyxl==3.1.5
+pyarrow==24.0.0
+matplotlib==3.10.9
+plotly==6.9.0
+umap-learn==0.5.12
+iterative-stratification==0.1.9
+optuna==4.9.0
+catboost==1.2.10
+lightgbm==4.7.0
+xgboost==3.4.0
+gensim==4.4.0
+boruta==0.4.3
+shap==0.48.0
