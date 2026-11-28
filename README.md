@@ -1,6 +1,6 @@
 # OdorClassifier: Multi-label molecular odor prediction
 
-OdorClassifier is a Python framework for investigating quantitative structure–odor relationships (QSORs) and predicting multiple odor categories from molecular structures represented by SMILES. It combines molecular descriptors, fingerprints and molecular embeddings with conventional machine-learning classifiers. A post-prediction label audit uses structural similarity and odor-label association rules to flag potentially excessive or missing predicted labels.
+OdorClassifier is a Python framework for investigating quantitative structure–odor relationships (QSORs) and predicting multiple odor categories from molecular structures represented by SMILES. It combines molecular descriptors, fingerprints and molecular embeddings with machine-learning classifiers. A post-prediction label audit uses structural similarity and odor-label association rules to flag potentially excessive or missing predicted labels.
 
 ## Contents
 
@@ -20,26 +20,9 @@ OdorClassifier is a Python framework for investigating quantitative structure–
 | --- | --- |
 | `data/compounds.xlsx` | Final curated dataset of 5,288 compounds. |
 | `data/class_dictionary.xlsx` | Dictionary defining 22 odor categories and their associated original odor terms. |
-| `data/mol2vec_model_300dim.pkl` | Pretrained Mol2vec model required when Mol2vec features are enabled; not included. |
 
-The compound workbook contains the following columns:
 
-| Column | Description |
-| --- | --- |
-| `No.` | Compound identifier. |
-| `Name` | Compound name. |
-| `SMILES` | Molecular structure in SMILES notation. |
-| `odor1`–`odor10` | Original odor descriptors. |
-| `MolecularWeight` | Molecular weight. |
-| `class1`–`class10` | Dictionary-derived categories corresponding positionally to `odor1`–`odor10`. Empty odor entries have empty class entries. |
-
-The dictionary consists of a `class` column and `type1`–`type29` columns containing associated odor terms. The 22 categories, in dictionary order, are:
-
-> natural, woody, fruity, spicy, fresh, dairy, floral, alcohol, fat, sweet, vegetable, marine, meaty, animal, clean, sharp, cooked, odorless, unpleasant, balsamic, large, other.
-
-During training, the original odor descriptors are mapped directly to the dictionary and converted to a binary compound-by-category matrix. Repeated occurrences of a category within one compound contribute a single positive target. All 22 categories are retained regardless of frequency. `class1`–`class10` are provided for transparency, not as the source of the model's binary targets. The first mapped odor is used as the primary category where required for feature selection or visualization. `UC` (unclassified) is a prediction fallback, not an additional training category.
-
-The included dataset yields a 5,288 × 22 binary target matrix with no unmapped odor descriptors or compounds lacking a mapped category.
+During training, the original odor descriptors are mapped directly to the dictionary and converted to a binary compound-by-category matrix. Repeated occurrences of a category within one compound contribute a single positive target. All 22 categories are retained regardless of frequency. `class1`–`class10` are provided for transparency, not as the source of the model's binary targets. 
 
 ## Installation
 
@@ -67,8 +50,6 @@ Install the dependencies:
 python -m pip install -r requirements.txt
 ```
 
-`requirements.txt` is an unpinned dependency list, not a verified lockfile of the manuscript environment. Exact Python and package versions used for the manuscript have not been supplied. Some optional features require additional compatible packages.
-
 ### Mol2vec model
 
 When Mol2vec is enabled, the code requires the `mol2vec` package (for `mol2alt_sentence`) and a pretrained Word2Vec model readable by Gensim. Install the compatible Mol2vec distribution used in the original experiments and place the corresponding pretrained model at `data/mol2vec_model_300dim.pkl`. The model file is not included here. If you only want to run the workflow without Mol2vec, use `--no-mol2vec`. This changes the feature set and is not equivalent to reproducing an experiment using Mol2vec.
@@ -80,7 +61,7 @@ When Mol2vec is enabled, the code requires the `mol2vec` package (for `mol2alt_s
 3. **Data partitioning:** Split the dataset into training, validation and held-out test subsets, using iterative multi-label stratification when the dependency is available. The existing code falls back to primary-category stratification if it is unavailable.
 4. **Feature processing and selection:** Remove unusable features, impute missing values, filter by variance and correlation, apply the configured selection method, scale features and optionally apply PCA.
 5. **Model training and optimization:** Fit binary classifiers for each odor category using the selected classifier family. Compare enabled candidates or train one selected family, with optional Optuna hyperparameter optimization.
-6. **Evaluation:** Evaluate predictions using multi-label classification metrics, optional per-label threshold calibration, and applicability-domain assessment. The held-out test is evaluated using a model refitted on train+validation, not the full-data production model.
+6. **Evaluation:** Evaluate predictions using multi-label classification metrics, optional per-label threshold calibration, and applicability-domain assessment. The held-out test is evaluated using a model refitted on train+validation.
 7. **Production refitting:** Refit the selected classifier and applicability domain on the full dataset, reusing the feature pipeline fitted on the training subset. Save models, reports and chemical-space visualizations.
 8. **Post-prediction label audit:** Combine nearest-neighbor label support and FP-Growth association rules to flag possible excessive or missing labels. The internal test audit uses the evaluation snapshot frozen before production refitting and train+validation references only; the test truth is kept separate for evaluating recommendations.
 
@@ -120,21 +101,13 @@ Display the available command-line options:
 python scripts/run_pipeline.py --help
 ```
 
-Run the pipeline with the script's defaults (requires the pretrained Mol2vec model):
+Run the pipeline with the script's defaults:
 
 ```bash
 python scripts/run_pipeline.py
 ```
 
 Omitting `--selected-model` compares the enabled classifier families. By default, candidate comparison precedes tuning of the selected model. Use `--tune-all-candidates` to tune every enabled candidate before selection.
-
-For example, train one classifier with selected feature families disabled and no hyperparameter search:
-
-```bash
-python scripts/run_pipeline.py --selected-model naive_bayes --selection-method mutual_info --no-optuna --no-mordred --no-mol2vec
-```
-
-This is an illustrative command, not the manuscript experiment configuration.
 
 Key options:
 
@@ -184,8 +157,6 @@ For basic prediction only, a separate entry point is available:
 python -m odor_classifier.cli predict --smiles "CCO" "c1ccccc1O"
 ```
 
-**Threshold note:** The basic prediction entry point uses the global configured cutoff rather than automatically loading saved per-label thresholds. Use the external prediction audit command for predictions with saved thresholds. Results from different cutoff settings are not interchangeable.
-
 ### Held-out test label audit
 
 The training workflow normally runs the held-out audit automatically. To rerun it from a completed experiment's saved inputs:
@@ -233,8 +204,6 @@ Training creates an `outputs/` directory containing reports, models, plots, cach
 | `models/multilabel_thresholds.joblib` | Per-label thresholds, if calibrated. |
 | `plots/` | Evaluation and chemical-space visualizations. |
 
-Only load serialized models from trusted sources.
-
 ## Repository structure
 
 ```text
@@ -269,19 +238,3 @@ Only load serialized models from trusted sources.
 ├── .gitignore
 └── README.md
 ```
-
-## Reproducibility and testing
-
-Run the regression test suite from the repository root:
-
-```bash
-python -m pytest -q
-```
-
-Some tests require external assets or optional packages. For manuscript reproduction, retain the exact dataset, dictionary, pretrained Mol2vec model, dependency versions, experiment configuration, random seed, split assignments, selected features and fitted experiment setup. Do not reuse checkpoints after changing the source code; start with `--fresh-start`. The source release does not include generated models, outputs, or the original manuscript experiment configuration. Full manuscript-scale numerical reproduction has not been verified.
-
-## Citation and data availability
-
-OdorClassifier accompanies research on quantitative structure–odor relationships and multi-label molecular odor prediction. Manuscript citation details and DOI have not yet been supplied. Cite the associated manuscript and the specific repository release when these are available.
-
-The dataset and dictionary are included in this release candidate. Dataset provenance, redistribution permissions, pretrained-model availability, authorship and software license must be confirmed before public release. No license is implied by this repository.
