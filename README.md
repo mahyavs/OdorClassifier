@@ -77,7 +77,7 @@ When Mol2vec is enabled, the code requires the `mol2vec` package (for `mol2alt_s
 | 3D geometric descriptors (WHIM, GETAWAY, RDF, MoRSE, AUTOCORR3D) | `use_field_descriptors` |
 | GRIND descriptors | `use_grind_descriptors` |
 
-Available feature-selection methods are mutual information (`mutual_info`), Boruta (`boruta`), recursive feature elimination with cross-validation (`rfecv`), L1-regularized logistic regression (`lasso`), SHAP-based ranking (`shap`) and no additional selection (`none`). Methods can be applied sequentially.
+Available feature-selection methods are mutual information (`mutual_info`), Boruta (`boruta`), recursive feature elimination with cross-validation (`rfecv`), L1-regularized logistic regression (`lasso`) and no additional selection (`none`). Methods can be applied sequentially.
 
 ### Classifier families
 
